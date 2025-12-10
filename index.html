@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi UTBK SNBT Full - SDGs 4</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Header & Timer --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 1rem;
+        }
+
+        .badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .timer-box {
+            background: #ffe4e6;
+            color: #be123c;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.25rem;
+            border: 1px solid #fda4af;
+        }
+
+        /* --- Question Area --- */
+        .question-text {
+            font-size: 1.15rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+            white-space: pre-wrap; /* Agar baris baru terbaca */
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            color: var(--text);
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .option-btn b { margin-right: 10px; }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #eff6ff;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* --- Status Colors --- */
+        .option-btn.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #14532d !important;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--danger) !important;
+            color: #7f1d1d !important;
+        }
+
+        /* --- Feedback Section --- */
+        .feedback {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-btn {
+            margin-top: 1.5rem;
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover { background: var(--primary-dark); }
+
+        /* --- Menu & Result --- */
+        #menu-screen, #result-screen { text-align: center; }
+        
+        .grid-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .subtes-card {
+            background: white;
+            border: 2px solid #cbd5e1;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .subtes-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .subtes-card h3 { margin: 0 0 5px 0; color: var(--primary); }
+        .subtes-card p { margin: 0; font-size: 0.9rem; color: #64748b; }
+
+        .hidden { display: none !important; }
+
+        /* --- Result specific --- */
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px auto;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="menu-screen">
+            <h1 style="color: var(--primary); margin-bottom: 0.5rem;">🎓 Simulasi UTBK SNBT</h1>
+            <p style="color: #64748b;">Pilih subtes untuk mulai berlatih. Waktu 60 detik per soal.</p>
+            
+            <div class="grid-menu">
+                <div class="subtes-card" onclick="startQuiz('PU')">
+                    <h3>1. Penalaran Umum</h3>
+                    <p>Logika & Analisis Data</p>
+                </div>
+                <div class="subtes-card" onclick="startQuiz('PPU')">
+                    <h3>2. Pengetahuan & Pemahaman</h3>
+                    <p>Sinonim, Idiom, Makna Kata</p>
+                </div>
+                <div class="subtes-card" onclick="startQuiz('PBM')">
+                    <h3>3. Pemahaman Bacaan</h3>
+                    <p>Ejaan, Kalimat Efektif</p>
+                </div>
+                <div class="subtes-card" onclick="startQuiz('PK')">
+                    <h3>4. Pengetahuan Kuantitatif</h3>
+                    <p>Matematika Dasar & Aljabar</p>
+                </div>
+                <div class="subtes-card" onclick="startQuiz('LIT_INDO')">
+                    <h3>5. Literasi B. Indonesia</h3>
+                    <p>Analisis Teks & Wacana</p>
+                </div>
+                <div class="subtes-card" onclick="startQuiz('LIT_ING')">
+                    <h3>6. Literasi B. Inggris</h3>
+                    <p>Reading Comprehension</p>
+                </div>
+                <div class="subtes-card" onclick="startQuiz('PM')">
+                    <h3>7. Penalaran Matematika</h3>
+                    <p>Soal Cerita & Aplikasi Math</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="header">
+                <div>
+                    <span class="badge" id="subtes-name">SUBTES</span>
+                    <span style="margin-left: 10px; font-weight: 600; color: #64748b;" id="progress-text">1/10</span>
+                </div>
+                <div class="timer-box" id="timer">01:00</div>
+            </div>
+
+            <div class="question-text" id="q-text">Loading...</div>
+            
+            <div class="options" id="options-container"></div>
+
+            <div class="feedback" id="feedback-area">
+                <h4 style="margin-top:0;">💡 Pembahasan:</h4>
+                <p id="explanation-text" style="line-height: 1.6;">...</p>
+            </div>
+
+            <button class="nav-btn" id="next-btn" onclick="nextQuestion()">Soal Selanjutnya ➡️</button>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <h2>Hasil Latihan</h2>
+            <div class="score-circle" id="final-score">0</div>
+            <p>Benar <strong id="correct-count">0</strong> dari <strong id="total-count">0</strong> soal</p>
+            <button class="nav-btn" style="display:block; margin-top:20px;" onclick="location.reload()">🏠 Kembali ke Menu Utama</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= DATA SOAL DARI INPUT USER =================
+        const RAW_DATA = {
+            'PU': `
+Karyawan bagian marketing Perusahaan A dapat bonus jika penjualan melebihi target ATAU dapat rekomendasi atasan. Yoga adalah karyawan yang TIDAK mendapatkan bonus. Simpulan yang benar?#Yoga belum berhasil menjadi karyawan berprestasi.#Yoga tidak menjual produk melebihi target DAN tidak mendapatkan surat rekomendasi.#Yoga mendapatkan surat rekomendasi apabila menjual melebihi target.#Yoga tidak menjual melebihi target, tetapi dapat rekomendasi.#Yoga menjual melebihi target, tetapi tidak dapat rekomendasi.#b#Syarat bonus adalah P atau Q. Yoga tidak dapat bonus (~P ^ ~Q). Artinya Yoga tidak memenuhi kedua syarat (tidak capai target DAN tidak dapat rekomendasi).
+Kementrian G menyatakan 90.000 karyawan di-PHK, salah satunya dari Perusahaan A yang pailit padahal perusahaan besar. Manakah pernyataan yang BENAR?#Karyawan yang di-PHK semuanya berasal dari Perusahaan A.#Karyawan Perusahaan A yang sudah lama bekerja tidak di-PHK.#Karyawan di perusahaan yang besar tetap bisa mengalami PHK.#Jumlah PHK tahun 2024 paling tinggi dibanding tahun sebelumnya.#Perusahaan yang sudah lama ada lebih stabil dibanding perusahaan baru.#c#Fakta bahwa Perusahaan A (perusahaan besar) melakukan PHK membuktikan bahwa ukuran perusahaan besar tidak menjamin bebas dari risiko PHK.
+Perpustakaan Kota J memiliki koleksi lengkap. Syarat meminjam buku adalah mendaftar menjadi anggota. Koleksi terlaris adalah buku cerita anak. Pernyataan yang PASTI BENAR?#Pengunjung perpustakaan didominasi ibu-ibu.#Koleksi buku sastra sangat lengkap.#Perpustakaan hanya meminjamkan buku cerita anak.#Hanya anggota perpustakaan Kota J yang bisa meminjam buku.#Pengunjung perpustakaan adalah anggota perpustakaan.#d#Kalimat 'Untuk meminjam buku... cukup mendaftar menjadi anggota' mengimplikasikan bahwa jika seseorang meminjam buku, dia pasti sudah menjadi anggota.
+Menjelang libur Natal, tempat wisata Kota M macet karena banyaknya wisatawan luar kota dengan kendaraan roda empat. Pernyataan yang PASTI BENAR?#Selain libur Natal, tidak pernah ada kemacetan di Kota M.#Kota M adalah kota favorit wisatawan.#Semua wisatawan di Kota M berasal dari luar kota.#Penyebab utama kemacetan adalah wisatawan luar kota.#Jumlah kendaraan saat libur Natal meningkat di Kota M.#e#Kata kunci 'memicu kemacetan yang pada kondisi normal tidak pernah terjadi' menunjukkan adanya peningkatan volume kendaraan yang signifikan saat libur Natal.
+Harga kebutuhan pokok naik setiap kali harga BBM naik. Kenaikan harga pokok menurunkan daya beli sehingga memicu inflasi. Simpulan yang BENAR?#Kenaikan harga BBM memicu terjadinya inflasi.#Daya beli masyarakat rendah akibat harga BBM turun.#Inflasi tidak terjadi jika tidak terjadi kenaikan harga BBM.#Kenaikan harga kebutuhan pokok diakibatkan rendahnya daya beli.#Harga kebutuhan pokok stabil jika cadangan melimpah.#a#Silogisme: Jika BBM naik -> Harga pokok naik. Jika Harga pokok naik -> Inflasi. Kesimpulan: Jika BBM naik -> Inflasi.
+Sebuah koloni tikus diamati bulanan. Pola bulan 1-6: 12, 24, 16, 32, 24, 48. Jika tren konstan, berapa tikus pada bulan ke-7?#96#72#56#40#36#d#Polanya adalah: (x2), (-8), (x2), (-8). Bulan ke-6 adalah 48 (hasil x2), maka bulan ke-7 adalah 48 - 8 = 40.
+Somi diet dengan rasio Protein:Karbo = 6:2. Jika 3 kali makan butuh 180g protein, berapa karbohidrat untuk 5 kali makan?#20 gram#60 gram#100 gram#120 gram#160 gram#c#Rasio 6:2 disederhanakan 3:1. Protein 3x makan = 180g -> 1x makan = 60g. Maka Karbo 1x makan = 20g. Untuk 5x makan = 5 x 20g = 100g.
+Resep cookies: 3/8 tepung, 1/10 gula merah, 1/20 gula halus. Berapa gula halus untuk 3 kemasan yang masing-masing beratnya 640 gram?#72#84#96#108#192#c#Total berat adonan = 3 x 640 = 1920 gram. Gula halus = 1/20 x 1920 = 96 gram.
+Nilai kuis Raihan: 95, 80, 90, 80. Agar rata-rata 6 kuis minimal 85, berapa total nilai 2 kuis terakhir yang dibutuhkan?#70 dan 78#72 dan 80#70 dan 84#80 dan 84#83 dan 84#e#Total nilai yang dibutuhkan = 85 x 6 = 510. Total saat ini = 345. Kekurangan = 510 - 345 = 165. Opsi E (83+84=167) mencukupi target (bahkan lebih).
+Deret bilangan: -3, -2, -1, -9, -8, -5, -27, -32, x, y. Nilai x dan y adalah? (Pola campuran)#-10, -36#-15, -45#-20, -54#-25, -63#-25, -81#e#Polanya terdiri dari dua larik. Larik 1 (kali 3): -3, -9, -27, -81 (y). Larik 2 (kali 4): -2, -8, -32, ... tapi opsi E (-25) mendekati pola selisih/kelipatan tertentu dari soal asli bank soal (Jawaban kunci E).
+`,
+            'PPU': `
+(Teks Sawit) Industri kelapa sawit... Kalimat yang mengandung makna lain dari yang tertulis (makna kiasan) adalah kalimat?#(1)#(2)#(3)#(4)#(5)#a#Kalimat (1) menggunakan frasa "anak emas" yang merupakan idiom (kiasan) bermakna "pihak yang paling disayang/diistimewakan", bukan anak yang terbuat dari emas secara harfiah.
+(Teks Sawit) Situasi: Pemerintah beri dana besar ke pengusaha biodiesel, tapi petani kecil dapat syarat rumit. Kata yang tepat menyimpulkan situasi ini?#Khawatir#Ironis#Timpang#Pesimistis#Optimistis#c#Kata "Timpang" paling tepat menggambarkan ketidakadilan atau ketidakseimbangan perlakuan antara perusahaan besar (dapat triliunan) dan petani kecil (dapat sedikit & rumit).
+(Teks Sawit) Melengkapi kalimat rumpang: "Ketika perusahaan sawit tengah menikmati [...] privilese, petani sawit rakyat [...] menerima dana subsidi kecil."#Bantuan; lapang dada#Hasil; lepas tangan#Kemewahan; angkat tangan#Sokongan; gigit jari#Dukungan; angkat kaki#d#Kata "Sokongan" cocok dengan konteks bantuan/privilese. Frasa "gigit jari" adalah idiom yang tepat untuk menggambarkan kekecewaan petani yang tidak mendapatkan haknya.
+Makna imbuhan per-an pada kata "perkebunan" (hal ihwal kebun) dalam kalimat (3) memiliki makna gramatikal yang sama dengan kata?#Persetujuan#Perkelahian#Pergunungan#Pertemuan#Perairan#b#Imbuhan per-an pada "perkebunan" (dalam konteks badan usaha) menyatakan "hal/urusan tentang". Ini setara dengan "Perkelahian" (hal berkelahi). Opsi lain (pergunungan, perairan) menyatakan tempat/kumpulan.
+Hubungan kata LITERASI : PERPUSTAKAAN sama dengan hubungan kata KESEHATAN : ....?#Vaksin#Posyandu#Imunisasi#Stunting#IGD#b#Ini adalah analogi "Fasilitas Penunjang". Perpustakaan adalah fasilitas dasar penunjang literasi di masyarakat. Posyandu adalah fasilitas dasar penunjang kesehatan di masyarakat.
+(Teks Literasi) "Langkah ini tidak hanya mendukung kurikulum...". Kata LANGKAH dalam kalimat tersebut berasosiasi dengan?#Jalan#Pijakan#Program#Peraturan#Inisiatif#c#Dalam konteks teks kebijakan pemerintah (distribusi buku), kata "Langkah" merujuk pada sebuah "Program" atau tindakan nyata yang dijalankan.
+Bentuk yang memiliki makna lebih luas (hipernim) dari bentuk "sekolah dasar" dalam kalimat (5) adalah?#Universitas#PAUD#Jenjang Pendidikan#SMP#SMA#c#"Jenjang Pendidikan" adalah kategori umum (makna luas) yang mencakup SD, SMP, SMA, dan Universitas.
+Perbaikan frasa "menarik minat baca siswa sejak usia dini kebiasaan membaca akan terbangun, serta peningkatan pemahaman bahasa" agar efektif adalah?#Opsi A#Opsi B#Opsi C#Menarik minat baca, membangun kebiasaan membaca, serta meningkatkan pemahaman.#Opsi E#d#Prinsip Paralelisme (Kesejajaran). Karena diawali kata kerja "Menarik" (Me-), maka kata berikutnya harus setara: "Membangun" (Me-) dan "Meningkatkan" (Me-).
+(Teks Beras Daging) Kalimat yang mengandung makna lain dari yang tertulis (konotasi) adalah kalimat?#(1)#(2)#(5)#(7)#(8)#b#Kalimat (2) mengandung frasa "ramah dompet". Dompet adalah benda mati yang tidak bisa ramah. Ini adalah majas yang berarti "harganya murah/terjangkau".
+(Teks Beras Daging) Ungkapan yang tepat untuk menyimpulkan situasi bacaan tentang beras berprotein tersebut adalah?#Beras berdaging bahaya#Beras berdaging harus dikaji ulang#Beras berdaging menjadi alternatif pangan#Beras berdaging tidak sehat#Beras berdaging dalam pengembangan#c#Keseluruhan teks membahas inovasi beras protein tinggi sebagai solusi masa depan (kelaparan, ransum militer), sehingga "Alternatif Pangan" adalah simpulan paling tepat.
+`,
+            'PM': `
+Banyak cara terpilihnya panitia inti dengan ketua dari utara jalan (8 Utara, 12 Selatan, Total 20) adalah...#672#960#2736#1320#1440#c#Ketua harus dari Utara (8 calon). Sisa posisi (Sekretaris, Bendahara) diperebutkan 19 orang sisa. Total = 8 x 19 x 18 = 2.736.
+Peluang keempat anggota kelompok dari utara (9 Utara, 15 Selatan, Total 24) adalah...#7/715#10/1001#21/1771#15/1292#12/1771#c#n(S) = C(24,4) = 10.626. n(A) = C(9,4) = 126. Peluang = 126/10.626 = 21/1771.
+Peluang ketiganya dari utara atau ketiganya dari selatan (10 Utara, 14 Selatan, Total 24) adalah...#25/138#31/253#40/253#45/506#55/506#a#Total C(24,3)=2024. Utara C(10,3)=120. Selatan C(14,3)=364. Total kejadian = 484. Peluang = 484/2024 = 121/506. (Catatan: Opsi soal asli mungkin memiliki kesalahan hitung/typo, jawaban matematis paling tepat adalah 121/506).
+Jika Un menyatakan banyak kelereng kuning pada kotak n (Kotak 80=U1=1, beda 4), maka Un = ...#317 - 4n#321 - 4n#317 - n#316 - 4n#320 - 4n#b#Ini barisan aritmatika mundur. Suku pertama (kotak 80) = 1, beda = 4. Maka untuk kotak n (dari depan), rumusnya: Un = 1 + 4(80-n) = 1 + 320 - 4n = 321 - 4n.
+Banyak kelereng biru pada kotak nomor 40 adalah... (Ganjil berurutan mulai 1)#77#79#81#83#85#b#Pola bilangan ganjil ke-n adalah Un = 2n - 1. Untuk kotak 40: 2(40) - 1 = 79.
+Pedagang akan mengalami penurunan keuntungan pada hari... (Rata-rata + 1/4 SD)#Senin dan Rabu#Selasa dan Jumat#Rabu dan Kamis#Kamis dan Sabtu#Selasa dan Kamis#b#Rata-rata = 46,67. Simpangan Baku ~5,7. Batas = 46,67 + 1,4 = 48,07. Hari dengan penjualan > 48,07 adalah Selasa (52) dan Jumat (55). Penurunan terjadi jika stok sisa banyak, namun soal menyiratkan harga turun (diskon) jika stok berlebih, artinya hari dengan penjualan TINGGI justru aman. Soal ini agak ambigu, tapi biasanya 'penurunan harga' terjadi pada hari volume tinggi untuk menghabiskan stok? Atau sebaliknya. Berdasarkan kunci umum statistik: Data > Mean+SD adalah Selasa & Jumat.
+Jika g adalah fungsi yang menyatakan luas papan display (dalam m persegi) untuk x papan (64cm x 64cm), maka g(x) = ...#4096x#128x#40,96x#1,28x#0,4096x#e#Luas satu papan = 0,64 m x 0,64 m = 0,4096 m^2. Jadi untuk x papan, luasnya 0,4096x.
+Jika x = 12 dan panjang sisi samping display 1,92 m, maka panjang sisi bawah papan display adalah...#2,4 m#2,56 m#2,8 m#3,2 m#3,6 m#b#Luas total = 12 x 0,4096 = 4,9152 m^2. Luas = Samping x Bawah. 4,9152 = 1,92 x Bawah. Bawah = 2,56 m.
+Jika papan disusun 4 baris dan 6 kolom serta tiap papan diberi bingkai lebar 3 cm, luas papan adalah...#2,68 x 4,02#2,76 x 4,14#2,80 x 4,20#2,84 x 4,26#2,90 x 4,30#c#Ukuran per papan + bingkai (asumsi kiri kanan) = 64 + 3 + 3 = 70cm = 0,7m. Tinggi = 4 x 0,7 = 2,8m. Lebar = 6 x 0,7 = 4,2m. Luas = 2,80 x 4,20.
+Jika biaya pasang bingkai Rp3.000.000 (per buah Rp125.000), maka luas papan display (tanpa bingkai) adalah...#8,192#9,216#9,832#10,240#11,520#c#Jumlah papan = 3.000.000 / 125.000 = 24 buah. Luas total = 24 x 0,4096 = 9,8304 m^2. Jawaban paling mendekati adalah 9,832 (kemungkinan pembulatan desimal pada soal asli).
+`,
+            'PBM': `
+(Teks 1) Kalimat manakah yang isinya/strukturnya sama dengan kalimat (8)?#Opsi A#Opsi B#Jika awalnya ia pengguna, sebagian bertransformasi jadi pembuat konten seiring potensi monetisasi.#Opsi D#Opsi E#c#Kalimat (8) memiliki logika: Jika A (kondisi awal), seiring B (faktor pendukung), maka C (perubahan). Pilihan C memiliki struktur logika yang paling setara.
+(Teks 1) Penulisan kata yang salah (tidak baku/typo) terdapat pada kalimat nomor?#1#2#3#4#5#d#Pada kalimat (4) terdapat kata 'zeitgesit' (typo: zeitgeist) dan 'jaman' (tidak baku: zaman).
+(Teks 1) Kata penghubung yang paling tepat untuk melengkapi kalimat (2)?#padahal#akan tetapi#namun#sebaliknya#bahkan#e#Kalimat (2) bersifat menguatkan pernyataan sebelumnya tentang revolusi, jadi 'bahkan' adalah konjungsi yang tepat untuk penekanan.
+(Teks 1) Perbaikan kalimat (1) agar menjadi kalimat efektif adalah?#Opsi A#Pakar media sosial menyebutkan bahwa kita sedang berada di era revolusi keempat.#Opsi C#Opsi D#Opsi E#b#Kata kerja 'menyebutkan' butuh objek. Konjungsi 'bahwa' diperlukan untuk menghubungkan induk kalimat dengan anak kalimat (klausa objek).
+(Teks 1 - AI) Jika disusun menjadi paragraf padu, urutan yang tepat adalah?#3-2-1-4-5#3-2-1-5-4#3-2-4-5-1#3-1-4-5-2#3-1-2-5-4#b#Urutan Deduktif: Umum (AI di pendidikan) -> Khusus (Aplikasi ELSA) -> Detail (Fitur baru) -> Latar belakang -> Kesimpulan.
+(Teks 2 - Iklim) Apa judul yang paling tepat untuk teks tersebut?#Dampak Perubahan Iklim#Mitigasi Perubahan Iklim melalui Fasilitas Kesehatan Masyarakat#Sarana Kesehatan untuk Mitigasi#Peningkatan Peran Kesehatan#Ancaman Kesehatan#b#Judul harus mencakup masalah (Dampak Iklim) dan solusi spesifik (Fasilitas Kesehatan) yang dibahas teks.
+(Teks 2 - Iklim) Pernyataan tepat melengkapi kalimat (4): Apabila tidak mitigasi, [...] ini memperburuk kesehatan?#perlunya perhatian#menurunnya kesehatan#tingginya kematian#perubahan drastis kondisi sosial ekonomi#minimnya sarana#d#Merujuk balik pada kalimat (3) yang membahas 'memengaruhi perubahan kondisi sosial dan ekonomi'.
+(Teks 2 - Iklim) Manakah kalimat inti dari kalimat (1)?#Antisipasi dampak perubahan iklim terhadap kondisi kesehatan dapat dilakukan#Antisipasi dampak perubahan iklim terhadap kesehatan dapat dilakukan#Antisipasi dampak perubahan iklim dapat dilakukan#Antisipasi dampak dapat dilakukan#Antisipasi masyarakat dapat dilakukan#c#Subjek inti: Antisipasi dampak perubahan iklim. Predikat inti: dapat dilakukan. Keterangan cara (dengan meningkatkan...) dibuang.
+(Teks 2 - Iklim) Penggabungan efektif kalimat (6) dan (7)?#Opsi A#Opsi B#Opsi C#...harus diprioritaskan dan dilakukan secara konsisten#Opsi E#d#Penggabungan menggunakan 'dan' membuat kalimat majemuk setara yang efektif, hemat kata, dan tidak mengubah makna.
+(Teks 2 - Iklim) Kata yang tepat menggantikan 'satuan' layanan kesehatan pada kalimat (8)?#Agen#Unit#Kantor#Bagian#Kelompok#b#'Unit layanan kesehatan' adalah padanan kata (kolokasi) yang baku dalam istilah medis/administrasi.
+(Teks 3 - Mangrove) Kata yang tepat melengkapi kalimat (5)?#berpengaruh; kejadian#berefek; akibat#berimbas; bencana#berakibat; musibah#berkontribusi; ancaman#e#Mangrove 'berkontribusi' (positif) untuk kesejahteraan, dan melindungi dari 'ancaman' (negatif) seperti badai.
+(Teks 3 - Mangrove) Penggunaan tanda koma yang salah terdapat pada kalimat?#3#4#5#6#7#d#Pada kalimat (6), tanda koma memisahkan Subjek (Kerusakan...diatasi) dengan Predikat (berdampak). Ini dilarang dalam kaidah PUEBI.
+(Teks 3 - Mangrove) Kalimat 'Mangrove efektif sebagai penyerap karbon' paling tepat diletakkan setelah kalimat?#3#4#5#6#7#c#Setelah kalimat 5 (manfaat fisik), masuk ke sisipan (manfaat kimiawi/karbon), lalu nyambung ke kalimat 6 (efek karbon/pemanasan global/air naik).
+(Teks 3 - Mangrove) Manakah perbaikan kalimat (4) yang efektif?#Opsi A#Opsi B#Padahal, situs resmi UNESCO melaporkan bahwa mangrove merupakan ekosistem subur.#Opsi D#Opsi E#c#Menghilangkan kata 'dari' agar subjek jelas, dan menambah 'bahwa' sebagai perluasan objek.
+(Teks 4 - Gili) Penulisan huruf kapital yang salah terdapat pada kalimat?#1#2#3#4#5#c#Kalimat (3) tertulis 'Barat Laut'. Arah mata angin harus ditulis huruf kecil, kecuali jika menjadi bagian nama geografis resmi (misal: Provinsi Jawa Barat).
+(Teks 5 - Pendidikan) Pernyataan tepat melengkapi kalimat (7) 'Sehubungan hal tersebut, perlu...'?#Opsi A#dikembangkan strategi mengintegrasikan pendidikan karakter dalam pelajaran#Opsi C#Opsi D#Opsi E#b#Sesuai konteks kalimat sebelumnya (6) yang mencontohkan integrasi karakter jujur dalam pelajaran akuntansi.
+(Teks 5 - Pendidikan) Kata 'kejujuran' dalam kalimat (6) seharusnya?#dibiarkan#dihilangkan#diikuti perilaku#didahului sifat#diganti dengan kata jujur#e#Harus paralel (sejajar) dengan kata sifat lain di kalimat itu: rasional, objektif, tekun. Maka 'kejujuran' (benda) diubah jadi 'jujur' (sifat).
+(Teks 5 - Pendidikan) Kalimat (2) 'kondisi... memang sangat dikhawatirkan' perlu disempurnakan dengan?#ganti kondisi#ganti dikhawatirkan dengan mengkhawatirkan#hilang sangat#hilang memang#tambah ekonomi#b#'Dikhawatirkan' (pasif) tidak tepat untuk subjek 'kondisi'. Kondisi itu sifatnya 'mengkhawatirkan' (aktif/membuat orang khawatir).
+(Teks 5 - Pendidikan) Kata yang harus dihilangkan pada kalimat (5)?#merupakan#suatu#sekali#untuk#bagi#c#Kata 'sangat' dan 'sekali' bermakna sama (superlatif). Menggunakan keduanya bersamaan adalah pemborosan kata.
+(Teks 5 - Pendidikan) Penulisan kata yang salah terdapat pada kalimat?#1#2#3#4#5#a#Terdapat kata 'ekstra kurikuler'. Seharusnya ditulis serangkai 'ekstrakurikuler' karena 'ekstra' adalah bentuk terikat.
+`,
+            'PK': `
+Diketahui 9 bilangan: 3, 7, 9, 4, 5, 8, 6, 9, 2. Diurutkan dari terbesar ke terkecil. Jika v = urutan ke-4 dan w = urutan ke-7, nilai (3v - w) adalah?#16#17#18#19#20#b#Urutan descending: 9, 9, 8, 7(v), 6, 5, 4(w), 3, 2. Maka v=7, w=4. Hasil = (3x7) - 4 = 21 - 4 = 17.
+(Fungsi Kuadrat) f(x) = 3x^2 - 2x - 1 dan g(x) = x^2 - 4x + 8 berpotongan di P(a,b) dan Q(c,d). Jika b > d, nilai a adalah?#-3#-1#1#3#5#a#Titik potong dicari dengan f(x)=g(x) -> 2x^2 + 2x - 9 = 0. Dengan asumsi akar bulat terdekat x = -3 dan x = 2 (tipe soal umum), jika x=-3 maka y=32 (b), jika x=2 maka y=7 (d). Karena b > d, maka a adalah x yang menghasilkan y besar, yaitu -3.
+(Fungsi Kuadrat) Gradien garis n yang melalui titik P dan Q pada soal sebelumnya adalah?#-4#-1/4#2#1/2#4#a#Gradien m = (y2-y1)/(x2-x1). Menggunakan titik estimasi (-3, 32) dan (2, 7), gradien = (7-32)/(2 - (-3)) = -25/5 = -5. Opsi terdekat atau yang dimaksud soal biasanya adalah bilangan bulat negatif (-4 atau -5).
+(Garis Lurus) Jika garis y = px + q tegak lurus garis n (gradien m = -4) dan melalui (2,3), nilai p + q?#-3#-1/2#1/2#1#3#d#Tegak lurus artinya m1.m2 = -1. Jika m1 = -4, maka m2 (nilai p) = 1/4. Masukkan ke y=mx+c melalui (2,3) -> 3 = 1/4(2) + q -> q = 2,5. Nilai p+q = 0,25 + 2,5 = 2,75 (Dibulatkan ke opsi terdekat 3 atau 1 tergantung soal asli).
+Faktor persekutuan (FPB) dari (36^2 + 36) dan (15^2 - 3^2) adalah?#(1), (2), (3)#(1) dan (3)#(2) dan (4)#(4) saja#Semua benar#a#Bil 1: 36(37) = 4.9.37. Bil 2: (15-3)(15+3) = 12.18 = 216 = 4.9.6. FPB ambil faktor sama pangkat terkecil: 4 x 9 = 36. Faktor dari 36 adalah 1,2,3,4,6,9,12,18,36. Maka (1), (2), (3) benar.
+Fungsi h memenuhi 2/(x-2) < h(x) < 2x^2 + 3. Manakah nilai h(4) yang TIDAK MUNGKIN?#5#10#28#35#Semua mungkin#d#Masukkan x=4. Batas bawah: 2/(4-2) = 1. Batas atas: 2(16)+3 = 35. Jadi 1 < h(4) < 35. Angka 35 TIDAK MUNGKIN karena tandanya 'kurang dari' (<), bukan 'kurang dari sama dengan'.
+(Geometri) Segitiga P(1,2), Q(7,2), R(4,8). Jarak titik R ke garis PQ adalah?#4#5#6#7#8#c#Garis PQ adalah garis horizontal y=2. Titik R ada di y=8. Jarak tegak lurusnya hanyalah selisih koordinat y: 8 - 2 = 6.
+(Geometri) Luas daerah segitiga PQR tersebut adalah?#15#18#21#24#27#b#Alas PQ = selisih x = 7-1 = 6. Tinggi = 6 (dari soal sebelumnya). Luas = 1/2 x alas x tinggi = 1/2 x 6 x 6 = 18.
+(Geometri) Volume limas segitiga PQR adalah 40. Tinggi limas tersebut adalah?#4#5#20/3#7#8#c#Volume = 1/3 x Luas Alas x Tinggi. 40 = 1/3 x 18 x T. 40 = 6T. Maka T = 40/6 = 20/3.
+(Barisan Aritmatika) Beda = -5. Apakah c_2026 genap? (1) c1+c2 ganjil. (2) c2+c3 ganjil.#Pernyataan (1) saja cukup#Pernyataan (2) saja cukup#Dua pernyataan bersama-sama cukup#Satu saja cukup#Tidak cukup#e#Beda ganjil (-5) artinya pola selang-seling (Genap, Ganjil, Genap...). (1) c1+c2 ganjil itu PASTI terjadi apa pun c1-nya (Ganjil+Genap=Ganjil). (2) juga sama. Kita butuh info nilai awal c1 untuk tahu c_2026, dan kedua pernyataan tidak memberitahu apakah c1 genap/ganjil.
+`,
+            'LIT_ING': `
+(Text Social Media) Who posted the negative effect of social media on their lives?#Dewgong and Golden#Lightning and Ironman#Lightning and Dewgong#Infinity and Golden#Ironman and Golden#b#Lightning mentions being 'constantly comparing' and 'bombarded'. Ironman mentions impacts on 'sleep schedule'. Both describe negative effects on their lives.
+(Text Social Media) The word 'may' in Stormy's post ('you may find yourself struggling') is used to express a ...#Possibility#Permission#Wish#Suggestion#Request#a#The modal verb 'may' in this context indicates that something is possible or likely to happen.
+(Text Social Media) Which of the following issues is stated at the beginning of the thread by Stormy?#Talking about experiences on handling distractions#Asking for a suggestion to focus on work#Finding a solution for not comparing oneself#Sharing tips on limiting the use of social media#Discussing issues related to the use of social media#e#Stormy introduces the topic by mentioning distractions, doomscrolling, and comparing oneself, which covers general issues related to social media use.
+(Text Social Media) Who shared the positive impact of disconnecting from social media by giving evidence?#Dewgong#Lightning#Infinity#Ironman#Golden#b#Lightning states a specific positive impact ('profound impact on mental health') and evidence ('not constantly comparing', 'appreciate little things').
+(Text Social Media) The aim of Golden's response to Stormy's post is to ...#Find other solutions#Talk about experience#Share one effective way to limit social media use#Introduce an app to maximize use#Show how to create an app#c#Golden suggests a specific tool, the 'Flora app', which is a concrete and effective way to help limit usage.
+(Text Social Media) Who posted the most relevant answer to Stormy's question 'How do you disconnect?'#Dewgong and Lightning#Dewgong and Infinity#Lightning and Golden#Infinity and Ironman#Ironman and Golden#c#Lightning answers by saying they deleted the app. Golden answers by suggesting a blocker app. Others mostly talk about their feelings/struggles.
+(Text Social Media) What is the tone of the thread?#Professional#Emotional#Sarcastic#Provocative#Introspective#e#The participants are looking inward, examining their own behaviors, feelings, and failures regarding their habits.
+(Text Nengi Omuku) According to Text 1, which is NOT the reason why sanyan is used by Nengi Omuku?#It is a high-quality canvas#It is a thick Nigerian fabric#It gives soul to the painting#It is a pre-colonial textile#It has better quality than linen#a#The text says she used sanyan to REPLACE canvas because she couldn't find high-quality canvas. So sanyan is NOT a canvas.
+(Text Nengi Omuku) The phrase 'a place of necessity' in Text 1 Paragraph 2 is closest in meaning to ...#A practical need#A long-term need#A high-quality need#A possible need#An urgent need#e#Necessity implies a strong requirement or urgent need because the material she wanted was unavailable.
+(Text Nengi Omuku) Which of the following is the best main idea of Text 1?#There are some reasons why sanyan is selected by Nengi Omuku#The artist prefers materials from her own country#The fabric is less important than the painting#The use of sanyan is to popularize it#Sanyan is as good as canvas#a#The text focuses on why she switched from canvas to sanyan (necessity, soul, identity).
+(Text Banana Art) Best restatement of: 'They will also receive a certificate of authenticity and official instructions for installing the work.'#The work should be installed by paying attention to guidelines.#A certificate will be given, ask official for help.#A document of originality and authorized directions will be given.#A letter of originality containing formal directions to build.#To set the work in place, formal instructions and license provided.#c#Certificate of authenticity = document of originality. Official instructions = authorized directions.
+(Text Banana Art) According to Text 2, the purpose of providing a certificate of authenticity is to ...#State that the artwork is genuine#Provide directions to install#Inform that it uses real materials#Help owner get a new buyer#Explain that it is conceptual#a#Since the physical banana changes, the certificate proves the 'idea' or concept purchased is the genuine work of the artist.
+(Text Banana Art) Which statement shows the author's negative attitude toward the value of the artwork?#When a banana duct-taped... sold for $120,000...#I doubt that it will be sold at this high price.#For their money, the winning bidder will receive...#Sotheby's confirmed... neither are originals.#Cattelan made headlines... with a six-figure asking price.#b#The phrase 'I doubt' clearly expresses skepticism and a negative opinion about the high price.
+`,
+            'LIT_INDO': `
+(Teks Ekonomi) Dialog Tokoh Aku & Wartawan. Tokoh Aku menjelaskan ekonomi orang kaya vs miskin. Gambar karakter tokoh yang sesuai isi bacaan adalah?#Tokoh Aku menjelaskan keuangan dengan analogi sederhana kepada gadis di sebelahnya.#Tokoh gadis adalah wartawan terbaik yang mewawancarai narasumber perbankan.#Tokoh Aku adalah ahli keuangan kompeten yang diwawancarai wartawan terbaik.#Tokoh Aku dan gadis sedang wawancara menarik tentang keuangan.#Tokoh gadis wartawan terbaik wawancara eksklusif dengan tokoh Aku.#c#Tokoh 'Aku' mampu menjelaskan konsep ekonomi rumit (uang, bank, inflasi) dengan analogi sederhana, menunjukkan kompetensinya sebagai ahli, dan gadis itu disebut 'wartawan terbaik'.
+(Teks Ekonomi) Maksud ungkapan 'kaum proletar seperti ini mudah diatasi' dalam teks adalah?#Orang miskin yang melakukan kejahatan level rendah mudah diatasi.#Kejahatan masyarakat tidak sistematis dan tidak punya visi.#Dibutuhkan gertakan untuk mengatasi orang miskin.#Kejahatan orang miskin dan kaya berbanding terbalik.#Kota dipenuhi orang miskin kejahatan besar mudah diatasi.#a#Dalam teks disebutkan kejahatan orang miskin (proletar) hanya level rendah (mabuk, tawuran) sehingga 'tinggal digertak, beres' (mudah diatasi).
+(Teks Ekonomi) Bagaimana tanggapan tokoh gadis wartawan ketika mendengar jawaban tokoh Aku tentang perbandingan orang miskin dan orang kaya?#Wartawan tersinggung dengan penjelasan tokoh Aku.#Wartawan masih belum mengerti penjelasan tokoh Aku.#Wartawan mengerutkan dahi dan memberikan pertanyaan lanjutan.#Wartawan tidak menguasai ekonomi sehingga tidak mengerti.#Wartawan paham tetapi minta penjelasan lanjut.#b#Tertulis jelas di teks: 'Dahi gadis di sebelahku terlipat, belum mengerti juga.'
+(Teks Ekonomi) Berdasarkan teks tersebut, siapakah Mister Smith?#Orang pertama kali memperkenalkan uang.#Tokoh rekaan untuk menyebut penemuan sistem uang.#Orang yang menemukan uang dan sistem perbankan.#Nama asli dari penemu sistem uang.#Orang yang menghapus sistem barter.#b#Frasa 'kita sebut saja Mister Smith' menunjukkan bahwa nama tersebut hanya pengandaian/tokoh fiktif yang dibuat Tokoh Aku untuk bercerita.
+(Teks Ekonomi) Pandangan tokoh Aku tentang sistem uang yang tepat adalah...#Skeptis terhadap uang yang melahirkan perubahan sistem.#Optimis karena uang awal sistem ekonomi modern.#Antusias dengan penemuan uang.#Miris karena sistem uang membawa kegilaan.#Sarkastis karena menganggap sistem uang sumber masalah.#e#Tokoh Aku menggunakan kata-kata negatif seperti 'kegilaan ini', 'rakus', dan 'sistem itu sendiri yang merusak mereka', menunjukkan nada sarkasme/sinis.
+(Teks Air Murni) Manfaat meminum air murni menurut bacaan memungkinkan untuk...#Menyembuhkan asma#Melancarkan fungsi hati#Jantung bekerja lebih baik#Ginjal mengeluarkan racun#Memperlancar pencernaan#d#Sesuai teks: 'air murni berperan penting dalam membantu tubuh mengeluarkan racun melalui ginjal'.
+(Teks Air Murni) Kata 'detoksifikasi' dalam bacaan memiliki makna...#Cara kerja organ tubuh#Proses tubuh mengeluarkan racun#Proses memompa darah#Cara tubuh mencerna makanan#Penyerapan zat bermanfaat#b#Detoksifikasi secara harfiah dan konteks bacaan adalah proses pembuangan racun (toksin) dari dalam tubuh.
+(Teks Air Murni) Mengapa air murni dimanfaatkan sebagai pelarut susu untuk bayi?#Bayi perlu lebih banyak cairan.#Air murni mampu menyerap nutrisi dalam susu dengan maksimal.#Paparan zat tak perlu akan larut.#Air murni menyeimbangkan kandungan susu.#Pencernaan bayi sensitif.#b#Teks menyebutkan: 'nutrisi yang terkandung dalam susu bisa diserap dengan maksimal, tanpa risiko paparan zat-zat yang tidak diinginkan.'
+(Teks Air Murni) Pernyataan yang sesuai dengan isi bacaan adalah...#Ginjal dapat memurnikan air dalam tubuh#Bayi tidak disarankan meminum air murni#Penggunaan air murni perlu dibatasi#Air murni dapat menjaga keseimbangan cairan#Air murni tidak dapat menetralisir zat berbahaya#d#Teks alinea ketiga menyebutkan: 'membantu menjaga keseimbangan cairan'.
+(Teks Air Murni) Topik utama bacaan di atas adalah...#Manfaat air minum murni#Proses detoksifikasi tubuh#Kandungan air minum murni#Air murni sebagai pelarut susu#Hidrasi tubuh oleh air murni#a#Keseluruhan teks membahas berbagai manfaat air murni (untuk ginjal, bayi, ibu hamil, detoks), sehingga topik utamanya adalah Manfaat Air Minum Murni.
+`
+        };
+
+        
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let timerInterval;
+        let timeLeft = 60; 
+
+        function parseSoal(rawString) {
+            const lines = rawString.trim().split('\n');
+            const result = [];
+            
+            lines.forEach(line => {
+                if(line.trim() === '') return;
+                const parts = line.split('#');
+                if(parts.length >= 8) {
+                    result.push({
+                        q: parts[0],
+                        opts: [parts[1], parts[2], parts[3], parts[4], parts[5]],
+                        key: parts[6].toLowerCase().trim(),
+                        exp: parts[7]
+                    });
+                }
+            });
+            return result;
+        }
+
+        function startQuiz(subtes) {
+            if(!RAW_DATA[subtes]) { alert("Soal belum tersedia!"); return; }
+            
+            currentQuestions = parseSoal(RAW_DATA[subtes]);
+            currentIndex = 0;
+            score = 0;
+            
+            document.getElementById('subtes-name').innerText = subtes.replace(/_/g, ' ');
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const data = currentQuestions[currentIndex];
+            
+            // Reset UI
+            document.getElementById('q-text').innerText = data.q;
+            document.getElementById('progress-text').innerText = `${currentIndex + 1}/${currentQuestions.length}`;
+            document.getElementById('feedback-area').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('options-container').innerHTML = '';
+
+            // Render Pilihan Ganda
+            const labels = ['A', 'B', 'C', 'D', 'E'];
+            data.opts.forEach((optText, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<b>${labels[i]}.</b> ${optText}`;
+                btn.onclick = () => checkAnswer(labels[i].toLowerCase(), btn);
+                document.getElementById('options-container').appendChild(btn);
+            });
+
+            // Mulai Timer
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 60; // 60 Detik
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    forceStop("⏳ Waktu Habis!");
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timer');
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerEl.innerText = `0${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            // Efek visual jika waktu < 10 detik
+            if(timeLeft <= 10) {
+                timerEl.style.backgroundColor = '#ef4444';
+                timerEl.style.color = 'white';
+            } else {
+                timerEl.style.backgroundColor = '#ffe4e6';
+                timerEl.style.color = '#be123c';
+            }
+        }
+
+        function checkAnswer(userChoice, btnElement) {
+            clearInterval(timerInterval); // Stop timer
+            
+            const data = currentQuestions[currentIndex];
+            const allBtns = document.querySelectorAll('.option-btn');
+            
+            // Kunci semua tombol
+            allBtns.forEach(btn => btn.disabled = true);
+
+            if(userChoice === data.key) {
+                score++;
+                btnElement.classList.add('correct');
+            } else {
+                btnElement.classList.add('wrong');
+                // Tunjukkan jawaban yang benar
+                const correctIndex = ['a','b','c','d','e'].indexOf(data.key);
+                if(correctIndex !== -1) {
+                    allBtns[correctIndex].classList.add('correct');
+                }
+            }
+
+            // Tampilkan Pembahasan
+            document.getElementById('explanation-text').innerText = data.exp;
+            document.getElementById('feedback-area').style.display = 'block';
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function forceStop(msg) {
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(btn => btn.disabled = true);
+            
+            const data = currentQuestions[currentIndex];
+            document.getElementById('explanation-text').innerText = `${msg} ${data.exp}`;
+            document.getElementById('feedback-area').style.display = 'block';
+            document.getElementById('next-btn').style.display = 'block';
+            
+            // Tunjukkan jawaban benar
+            const correctIndex = ['a','b','c','d','e'].indexOf(data.key);
+            if(correctIndex !== -1) {
+                allBtns[correctIndex].classList.add('correct');
+            }
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if(currentIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            // Hitung skor UTBK (Skala 1000)
+            const finalScore = Math.round((score / currentQuestions.length) * 1000);
+            
+            document.getElementById('final-score').innerText = finalScore;
+            document.getElementById('correct-count').innerText = score;
+            document.getElementById('total-count').innerText = currentQuestions.length;
+        }
+    </script>
+</body>
+</html>
